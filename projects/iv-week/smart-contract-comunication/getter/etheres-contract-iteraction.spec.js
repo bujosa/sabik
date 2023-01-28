@@ -1,5 +1,5 @@
 const { assert } = require('chai');
-const getValue = require('../ethers-contract-iteraction');
+const getValue = require('./ethers-contract-iteraction');
 
 describe('Contract', function () {
   const random = Math.floor(Math.random() * 1000);
