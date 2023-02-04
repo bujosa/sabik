@@ -7,6 +7,8 @@ contract Escrow {
     address public beneficiary;
     bool public isApproved = false;
 
+    event Approved(uint256 indexed balance);
+
     constructor(address _arbiter, address _beneficiary) payable {
         arbiter = _arbiter;
         depositor = msg.sender;
@@ -16,6 +18,9 @@ contract Escrow {
     function approve() external {
         require(msg.sender == arbiter, "You are not the arbiter");
         isApproved = true;
-        payable(beneficiary).transfer(address(this).balance);
+        uint256 balance = address(this).balance;
+        (bool success, ) = beneficiary.call{value: balance}("");
+        require(success, "Transfer failed");
+        emit Approved(balance);
     }
 }
