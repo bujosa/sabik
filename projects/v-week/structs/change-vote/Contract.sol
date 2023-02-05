@@ -47,6 +47,5 @@ contract Contract {
                 votes[i].choice = choice;
             }
         }
-        revert("Voter has not voted yet");
     }
 }
