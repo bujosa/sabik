@@ -2,12 +2,11 @@
 pragma solidity ^0.8.4;
 
 contract Party {
-    uint256 public amount;
-    uint256 public poolFunds;
-    address[] public guests;
+    uint256 private rsvpAmount;
+    address[] private guests;
 
     constructor(uint256 _amount) {
-        amount = _amount;
+        rsvpAmount = _amount;
     }
 
     modifier oneGuestPerAddress() {
@@ -17,21 +16,24 @@ contract Party {
         _;
     }
 
-    function rsvp() public payable oneGuestPerAddress {
-        require(msg.value == amount, "You must pay the right amount");
-        poolFunds += msg.value;
+    function rsvp() external payable oneGuestPerAddress {
+        require(msg.value == rsvpAmount, "You must pay the right amount");
         guests.push(msg.sender);
     }
 
-    function payBill(address venue, uint256 totalCost) public {
+    function payBill(address venue, uint256 totalCost) external {
+        uint256 poolFunds = address(this).balance;
+
         require(poolFunds >= totalCost, "Not enough funds in the pool");
+
         payable(venue).transfer(totalCost);
         poolFunds -= totalCost;
-        uint256 amountPerGuest = poolFunds / guests.length;
+
+        uint256 individualAmount = poolFunds / guests.length;
 
         for (uint256 i = 0; i < guests.length; i++) {
-            payable(guests[i]).transfer(amountPerGuest);
-            poolFunds -= amountPerGuest;
+            payable(guests[i]).transfer(individualAmount);
+            poolFunds -= individualAmount;
         }
     }
 }
