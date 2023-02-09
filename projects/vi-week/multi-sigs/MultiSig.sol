@@ -12,6 +12,7 @@ contract MultiSig {
         address to;
         uint256 value;
         bool executed;
+        bytes data;
     }
 
     modifier onlyOwners() {
@@ -35,11 +36,12 @@ contract MultiSig {
         require(required > 0, "No required signatures");
     }
 
-    function addTransaction(address _to, uint256 _value)
-        internal
-        returns (uint256)
-    {
-        transactions[transactionCount] = Transaction(_to, _value, false);
+    function addTransaction(
+        address _to,
+        uint256 _value,
+        bytes memory _data
+    ) internal returns (uint256) {
+        transactions[transactionCount] = Transaction(_to, _value, false, _data);
         transactionCount++;
         return transactionCount - 1;
     }
@@ -50,6 +52,10 @@ contract MultiSig {
             "Already confirmed"
         );
         confirmations[_transactionId][msg.sender] = true;
+
+        if (isConfirmed(_transactionId)) {
+            executeTransaction(_transactionId);
+        }
     }
 
     function getConfirmationsCount(uint256 _transactionId)
@@ -66,16 +72,13 @@ contract MultiSig {
         return count;
     }
 
-    function submitTransaction(address _to, uint256 _value)
-        external
-        onlyOwners
-        returns (uint256)
-    {
-        uint256 transactionId = addTransaction(_to, _value);
+    function submitTransaction(
+        address _to,
+        uint256 _value,
+        bytes memory _data
+    ) external onlyOwners returns (uint256) {
+        uint256 transactionId = addTransaction(_to, _value, _data);
         confirmTransaction(transactionId);
-        // if (getConfirmationsCount(transactionId) == required) {
-        //     executeTransaction(transactionId);
-        // }
         return transactionId;
     }
 
@@ -85,5 +88,19 @@ contract MultiSig {
         uint256 count = getConfirmationsCount(_transactionId);
 
         return count == required;
+    }
+
+    function executeTransaction(uint256 _transactionId) public {
+        require(
+            isConfirmed(_transactionId),
+            "Transaction is not confirmed yet"
+        );
+        Transaction storage transaction = transactions[_transactionId];
+        require(!transaction.executed, "Transaction already executed");
+        transaction.executed = true;
+        (bool success, ) = transaction.to.call{value: transaction.value}(
+            transaction.data
+        );
+        require(success, "Transaction failed");
     }
 }
