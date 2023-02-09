@@ -5,7 +5,7 @@ describe('MultiSig', function () {
   let zero = ethers.constants.AddressZero;
   let _required = 2;
 
-  describe('Add Transaction Tests', function () {
+  describe('Submit Transaction Tests', function () {
     beforeEach(async () => {
       accounts = await ethers.provider.listAccounts();
       const MultiSig = await ethers.getContractFactory('MultiSig');
@@ -13,66 +13,26 @@ describe('MultiSig', function () {
       await contract.deployed();
     });
 
-    it('should create a new Transaction', async function () {
-      await contract.addTransaction(accounts[1], 100);
-
-      let tx = await contract.callStatic.transactions;
+    it('should add a transaction', async function () {
+      await contract.submitTransaction(accounts[1], 100);
+      let tx = await contract.callStatic.transactions(0);
       let address = tx[0];
       assert.notEqual(address, zero);
     });
 
-    it('should keep count of the amount of transactions', async function () {
-      await contract.addTransaction(accounts[1], 100);
+    it('should confirm a transaction', async function () {
+      await contract.submitTransaction(accounts[1], 100);
 
-      let txCount = await contract.callStatic.transactionCount();
-      assert.equal(txCount.toNumber(), 1);
-    });
-
-    it('should return a transaction id', async function () {
-      await contract.addTransaction(accounts[1], 100);
-
-      let txId = await contract.callStatic.addTransaction(accounts[1], 100);
-
-      assert.equal(txId.toNumber(), 1);
-    });
-  });
-});
-const { assert } = require('chai');
-describe('MultiSig', function () {
-  let contract;
-  let accounts;
-  let _required = 2;
-  beforeEach(async () => {
-    accounts = await ethers.provider.listAccounts();
-    const MultiSig = await ethers.getContractFactory('MultiSig');
-    contract = await MultiSig.deploy(accounts.slice(0, 3), _required);
-    await contract.deployed();
-  });
-
-  describe('after creating the first transaction', function () {
-    beforeEach(async () => {
-      await contract.addTransaction(accounts[1], 100);
-      await contract.confirmTransaction(0);
-    });
-
-    it('should confirm the transaction', async function () {
       let confirmed = await contract.callStatic.getConfirmationsCount(0);
       assert.equal(confirmed, 1);
     });
 
-    describe('after creating the second transaction', function () {
-      beforeEach(async () => {
-        await contract.addTransaction(accounts[1], 100);
-        await contract.confirmTransaction(1);
-        await contract
-          .connect(ethers.provider.getSigner(accounts[1]))
-          .confirmTransaction(1);
-      });
-
-      it('should confirm the transaction twice', async function () {
-        let confirmed = await contract.callStatic.getConfirmationsCount(1);
-        assert.equal(confirmed, 2);
-      });
+    it('should not call addTransaction externally', async function () {
+      assert.equal(
+        contract.addTransaction,
+        undefined,
+        'Did not expect addTransaction to be defined publicly!'
+      );
     });
   });
 });

@@ -36,7 +36,7 @@ contract MultiSig {
     }
 
     function addTransaction(address _to, uint256 _value)
-        public
+        internal
         returns (uint256)
     {
         transactions[transactionCount] = Transaction(_to, _value, false);
@@ -64,5 +64,26 @@ contract MultiSig {
             }
         }
         return count;
+    }
+
+    function submitTransaction(address _to, uint256 _value)
+        external
+        onlyOwners
+        returns (uint256)
+    {
+        uint256 transactionId = addTransaction(_to, _value);
+        confirmTransaction(transactionId);
+        // if (getConfirmationsCount(transactionId) == required) {
+        //     executeTransaction(transactionId);
+        // }
+        return transactionId;
+    }
+
+    receive() external payable {}
+
+    function isConfirmed(uint256 _transactionId) public view returns (bool) {
+        uint256 count = getConfirmationsCount(_transactionId);
+
+        return count == required;
     }
 }
