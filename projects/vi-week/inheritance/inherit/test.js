@@ -13,28 +13,28 @@ describe('Hero', function () {
   });
 
   describe('Warrior', () => {
-    it('should have 100 health initially', async () => {
+    it('should have 200 health initially', async () => {
       const health = await warrior.health();
-      assert.equal(health.toNumber(), 100);
+      assert.equal(health.toNumber(), 200);
     });
 
     it('should take damage', async () => {
       await warrior.takeDamage(10);
       const health = await warrior.health();
-      assert.equal(health.toNumber(), 90);
+      assert.equal(health.toNumber(), 190);
     });
   });
 
   describe('Mage', () => {
-    it('should have 100 health initially', async () => {
+    it('should have 50 health initially', async () => {
       const health = await mage.health();
-      assert.equal(health.toNumber(), 100);
+      assert.equal(health.toNumber(), 50);
     });
 
     it('should take damage', async () => {
       await mage.takeDamage(10);
       const health = await mage.health();
-      assert.equal(health.toNumber(), 90);
+      assert.equal(health.toNumber(), 40);
     });
   });
 });
