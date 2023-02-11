@@ -13,3 +13,9 @@ contract Ownable {
         owner = msg.sender;
     }
 }
+
+contract Transferable is Ownable {
+    function transfer(address newOwner) external onlyOwner {
+        owner = newOwner;
+    }
+}
