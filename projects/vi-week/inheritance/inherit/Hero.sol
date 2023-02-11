@@ -5,15 +5,12 @@ interface Enemy {
     function takeAttack(Hero.AttackTypes attackType) external;
 }
 
-abstract contract Hero {
+contract Hero {
     uint256 public health;
+    uint256 public energy = 10;
 
     constructor(uint256 _health) {
         health = _health;
-    }
-
-    function takeDamage(uint256 damage) external {
-        health -= damage;
     }
 
     enum AttackTypes {
@@ -21,5 +18,7 @@ abstract contract Hero {
         Spell
     }
 
-    function attack(address enemy) public virtual;
+    function attack(address) public virtual {
+        energy--;
+    }
 }

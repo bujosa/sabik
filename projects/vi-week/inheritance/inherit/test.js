@@ -43,6 +43,11 @@ describe('Hero', function () {
         'Expected the attack from warrior to be of AttackType Brawl'
       );
     });
+
+    it('should use some energy', async () => {
+      const energy = await warrior.energy();
+      assert.equal(energy, 9);
+    });
   });
 
   describe('Mage', () => {
@@ -68,6 +73,11 @@ describe('Hero', function () {
         ATTACK_TYPES.SPELL,
         'Expected the attack from mage to be of AttackType Spell'
       );
+    });
+
+    it('should use some energy', async () => {
+      const energy = await mage.energy();
+      assert.equal(energy, 9);
     });
   });
 });
