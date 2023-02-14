@@ -9,6 +9,11 @@ contract Token {
 
     mapping(address => uint256) private _balanceOf;
 
+    constructor() {
+        totalSupply = 1000 * 10**uint256(decimals);
+        _balanceOf[msg.sender] = totalSupply;
+    }
+
     function balanceOf(address _owner) public view returns (uint256 balance) {
         return _balanceOf[_owner];
     }
