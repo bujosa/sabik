@@ -13,4 +13,22 @@ library Prime {
 
         return false;
     }
+
+    function isPrime(uint256 first) public pure returns (bool) {
+        if (first == 1) {
+            return false;
+        }
+
+        if (first == 2 || first == 3) {
+            return true;
+        }
+
+        for (uint256 x = 2; x <= first / 2; x++) {
+            if (dividesEvenly(first, x)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
