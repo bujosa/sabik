@@ -9,7 +9,13 @@ contract Voting {
         uint256 noCount;
     }
 
+    struct Vote {
+        bool alreadyVote;
+        bool status;
+    }
+
     Proposal[] public proposals;
+    mapping(uint256 => mapping(address => Vote)) private registerVotes;
 
     function newProposal(address target, bytes memory data) external {
         Proposal memory myStruct = Proposal(target, data, 0, 0);
@@ -17,10 +23,31 @@ contract Voting {
     }
 
     function castVote(uint256 proposalId, bool supportProposal) external {
-        if (supportProposal) {
-            proposals[proposalId].yesCount += 1;
+        Proposal storage proposal = proposals[proposalId];
+        Vote storage vote = registerVotes[proposalId][msg.sender];
+
+        if (vote.alreadyVote) {
+            if (supportProposal) {
+                if (!vote.status) {
+                    vote.status = !vote.status;
+                    proposal.noCount--;
+                    proposal.yesCount++;
+                }
+            } else {
+                if (vote.status) {
+                    vote.status = !vote.status;
+                    proposal.noCount++;
+                    proposal.yesCount--;
+                }
+            }
         } else {
-            proposals[proposalId].noCount += 1;
+            if (supportProposal) {
+                proposal.yesCount++;
+            } else {
+                proposal.noCount++;
+            }
+
+            registerVotes[proposalId][msg.sender] = Vote(true, supportProposal);
         }
     }
 }
