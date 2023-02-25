@@ -15,4 +15,12 @@ contract Voting {
         Proposal memory myStruct = Proposal(target, data, 0, 0);
         proposals.push(myStruct);
     }
+
+    function castVote(uint256 proposalId, bool supportProposal) external {
+        if (supportProposal) {
+            proposals[proposalId].yesCount += 1;
+        } else {
+            proposals[proposalId].noCount += 1;
+        }
+    }
 }
