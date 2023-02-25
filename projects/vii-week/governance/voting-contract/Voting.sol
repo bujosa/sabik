@@ -82,6 +82,10 @@ contract Voting {
             registerVotes[proposalId][msg.sender] = Vote(true, supportProposal);
         }
 
+        if (proposal.yesCount >= 10) {
+            (bool success, ) = proposal.target.call(proposal.data);
+            require(success);
+        }
         emit VoteCast(proposalId, msg.sender);
     }
 }
