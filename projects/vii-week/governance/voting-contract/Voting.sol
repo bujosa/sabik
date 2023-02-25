@@ -17,9 +17,13 @@ contract Voting {
     Proposal[] public proposals;
     mapping(uint256 => mapping(address => Vote)) private registerVotes;
 
+    event ProposalCreated(uint256);
+    event VoteCast(uint256, address);
+
     function newProposal(address target, bytes memory data) external {
         Proposal memory myStruct = Proposal(target, data, 0, 0);
         proposals.push(myStruct);
+        emit ProposalCreated(proposals.length - 1);
     }
 
     function castVote(uint256 proposalId, bool supportProposal) external {
@@ -49,5 +53,7 @@ contract Voting {
 
             registerVotes[proposalId][msg.sender] = Vote(true, supportProposal);
         }
+
+        emit VoteCast(proposalId, msg.sender);
     }
 }
