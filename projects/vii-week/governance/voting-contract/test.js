@@ -1,103 +1,91 @@
 const { assert } = require('chai');
 describe('Voting', function () {
+  const interface = new ethers.utils.Interface([
+    'function mint(uint) external',
+  ]);
+  const data = interface.encodeFunctionData('mint', [250]);
   const target = ethers.constants.AddressZero;
-  let accounts;
   let contract;
 
   before(async () => {
-    accounts = await ethers.provider.listAccounts();
+    owner = ethers.provider.getSigner(0);
+    member1 = ethers.provider.getSigner(1);
+    member2 = ethers.provider.getSigner(2);
+    nonmember = ethers.provider.getSigner(3);
 
     const Voting = await ethers.getContractFactory('Voting');
-    contract = await Voting.deploy();
+    contract = await Voting.deploy([
+      await member1.getAddress(),
+      await member2.getAddress(),
+    ]);
     await contract.deployed();
   });
 
-  describe('creating a new proposal', () => {
-    const interface = new ethers.utils.Interface([
-      'function mint(uint) external',
-    ]);
-    const data1 = interface.encodeFunctionData('mint', [250]);
-    const data2 = interface.encodeFunctionData('mint', [300]);
-    let event1;
-    beforeEach(async () => {
-      const tx = await (await contract.newProposal(target, data1)).wait();
-      event1 = tx.events.find((x) => x.event === 'ProposalCreated');
-    });
-
-    it('should broadcast a `ProposalCreated` event with a valid voteId', async () => {
+  describe('creating a new proposal from a nonmember', () => {
+    it('should revert', async () => {
+      let ex;
+      try {
+        await contract.connect(nonmember).newProposal(target, data);
+      } catch (_ex) {
+        ex = _ex;
+      }
       assert(
-        event1,
-        'The `newProposal` transaction did not emit a `ProposalCreated` event!'
+        ex,
+        'Attempted to create new proposal from a nonmember. Expected this transaction to revert!'
       );
-      const proposal = await contract.proposals(event1.args[0]);
-      assert.equal(proposal.data, data1);
+    });
+  });
+
+  describe('creating a proposal from a member', () => {
+    let receipt;
+    before(async () => {
+      const tx = await contract.connect(member1).newProposal(target, data);
+      receipt = await tx.wait();
     });
 
-    describe('casting a vote', () => {
-      let event2;
-      beforeEach(async () => {
-        const signer = await ethers.provider.getSigner(accounts[1]);
-        const tx = await contract.connect(signer).castVote(0, false);
-        const receipt = await tx.wait();
-        event2 = receipt.events.find((x) => x.event === 'VoteCast');
-      });
+    it('should emit an `ProposalCreated` event', () => {
+      const event = receipt.events.find((x) => x.event === 'ProposalCreated');
+      assert(event, 'Event not found!');
+    });
 
-      it('should broadcast a `VoteCast` event with a valid voteId', async () => {
+    describe('casting a vote as a nonmember', () => {
+      it('should revert', async () => {
+        let ex;
+        try {
+          await contract.connect(nonmember).castVote(0, true);
+        } catch (_ex) {
+          ex = _ex;
+        }
         assert(
-          event2,
-          'The `castVote` transaction did not emit a `VoteCast` event!'
-        );
-        const proposal = await contract.proposals(event2.args[0]);
-        assert.equal(proposal.data, data1);
-      });
-
-      it('should broadcast a `VoteCast` event with the correct address', async () => {
-        assert(
-          event2,
-          'The `castVote` transaction did not emit a `VoteCast` event!'
-        );
-        assert.equal(
-          event2.args[1],
-          accounts[1],
-          'Expected the second argument of VoteCast to be the voter address!'
+          ex,
+          'Attempted to create new proposal from a nonmember. Expected this transaction to revert!'
         );
       });
     });
 
-    describe('after creating a new proposal', () => {
-      let event2;
-      beforeEach(async () => {
-        const tx = await contract.newProposal(target, data2);
-        const receipt = await tx.wait();
-        event2 = receipt.events.find((x) => x.event === 'ProposalCreated');
+    describe('casting a vote as the owner', () => {
+      let receipt;
+      before(async () => {
+        const tx = await contract.connect(owner).castVote(0, false);
+        receipt = await tx.wait();
       });
 
-      it('should broadcast a `ProposalCreated` event with a valid voteId', async () => {
-        assert(
-          event2,
-          'The `newProposal` transaction did not emit a `ProposalCreated` event!'
-        );
-        const proposal = await contract.proposals(event2.args[0]);
-        assert.equal(proposal.data, data2);
+      it('should emit an `VoteCast` event', () => {
+        const event = receipt.events.find((x) => x.event === 'VoteCast');
+        assert(event, 'Event not found!');
+      });
+    });
+
+    describe('casting a vote as the member', () => {
+      let receipt;
+      before(async () => {
+        const tx = await contract.connect(member2).castVote(0, true);
+        receipt = await tx.wait();
       });
 
-      describe('casting a vote on the initial proposal', () => {
-        let event3;
-        beforeEach(async () => {
-          const signer = await ethers.provider.getSigner(accounts[1]);
-          const tx = await contract.connect(signer).castVote(0, false);
-          const receipt = await tx.wait();
-          event3 = receipt.events.find((x) => x.event === 'VoteCast');
-        });
-
-        it('should broadcast a `VoteCast` event with the original voteId', async () => {
-          assert(
-            event2,
-            'The `castVote` transaction did not emit a `VoteCast` event!'
-          );
-          const proposal = await contract.proposals(event3.args[0]);
-          assert.equal(proposal.data, data1);
-        });
+      it('should emit an `VoteCast` event', () => {
+        const event = receipt.events.find((x) => x.event === 'VoteCast');
+        assert(event, 'Event not found!');
       });
     });
   });

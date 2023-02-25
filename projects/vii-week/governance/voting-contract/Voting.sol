@@ -2,6 +2,9 @@
 pragma solidity ^0.8.4;
 
 contract Voting {
+    address[] members;
+    address owner;
+
     struct Proposal {
         address target;
         bytes data;
@@ -20,13 +23,38 @@ contract Voting {
     event ProposalCreated(uint256);
     event VoteCast(uint256, address);
 
-    function newProposal(address target, bytes memory data) external {
+    constructor(address[] memory _members) {
+        members = _members;
+        owner = msg.sender;
+    }
+
+    modifier onlyMembers() {
+        bool onlyMember = false;
+        if (owner != msg.sender) {
+            for (uint256 i = 0; i < members.length; i++) {
+                if (msg.sender == members[i]) {
+                    onlyMember = true;
+                    break;
+                }
+            }
+            require(onlyMember, "Only member can use this functions");
+        }
+        _;
+    }
+
+    function newProposal(address target, bytes memory data)
+        external
+        onlyMembers
+    {
         Proposal memory myStruct = Proposal(target, data, 0, 0);
         proposals.push(myStruct);
         emit ProposalCreated(proposals.length - 1);
     }
 
-    function castVote(uint256 proposalId, bool supportProposal) external {
+    function castVote(uint256 proposalId, bool supportProposal)
+        external
+        onlyMembers
+    {
         Proposal storage proposal = proposals[proposalId];
         Vote storage vote = registerVotes[proposalId][msg.sender];
 
