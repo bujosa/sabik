@@ -9,4 +9,4 @@ This repo contains w4 to w7 exercises from [#AlchemyUniversity](https://universi
 - [x] [IV-week: Smart Contract Basics](./projects/iv-week/)
 - [x] [V-week: Solidity](./projects/v-week/)
 - [x] [VI-week: Solidity Core](./projects/vi-week/)
-- [ ] [VII-week: Solidity Next Level](./projects/vii-week/)
+- [x] [VII-week: Solidity Next Level](./projects/vii-week/)
